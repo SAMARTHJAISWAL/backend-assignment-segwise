@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from app.services.scheduler import schedule_trigger, scheduler
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
