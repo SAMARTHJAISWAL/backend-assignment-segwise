@@ -4,9 +4,6 @@ from app.main import app
 client = TestClient(app)
 
 def test_get_active_events():
-    """
-    Test retrieving active (non-archived) events.
-    """
     response = client.get(
         "/events/?archived=false",
         headers={"X-API-KEY": "your-secure-secret-key-123456"}
@@ -16,9 +13,6 @@ def test_get_active_events():
     print("Active events retrieved successfully:", response.json())
 
 def test_get_archived_events():
-    """
-    Test retrieving archived events.
-    """
     response = client.get(
         "/events/?archived=true",
         headers={"X-API-KEY": "your-secure-secret-key-123456"}
@@ -28,9 +22,6 @@ def test_get_archived_events():
     print("Archived events retrieved successfully:", response.json())
 
 def test_archive_event():
-    """
-    Test archiving an event by ID.
-    """
     event_id = 2  # Replace with an existing event ID
     response = client.put(
         f"/events/archive/{event_id}",
