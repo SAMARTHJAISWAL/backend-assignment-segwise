@@ -6,9 +6,6 @@ logger = logging.getLogger(__name__)
 redis_client = StrictRedis(host="localhost", port=6379, decode_responses=True)
 
 def serialize_event(event):
-    """
-    Serialize an event to make it JSON-compatible.
-    """
     if isinstance(event, dict):
         for key, value in event.items():
             if isinstance(value, datetime):
