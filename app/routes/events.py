@@ -13,9 +13,6 @@ router = APIRouter()
 
 @router.get("/aggregate")
 def aggregate_events(db: Session = Depends(get_db)):
-    """
-    Aggregate event logs by trigger_id.
-    """
     try:
         results = (
             db.query(EventLog.trigger_id, func.count(EventLog.id).label("count"))
@@ -34,9 +31,6 @@ def list_event_logs(
     limit: int = 10,
     db: Session = Depends(get_db),
 ):
-    """
-    List event logs with caching and pagination.
-    """
     cache_key = f"events:archived:{archived}:page:{page}:limit:{limit}"
     cached_events = get_cached_events(cache_key)
 
