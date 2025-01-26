@@ -1,6 +1,7 @@
+from sqlalchemy import create_engine
 from app.models import Base
-from app.utils.db import engine
 
-# Create all tables in the database
+
+engine = create_engine("sqlite:///event_trigger.db")
 Base.metadata.create_all(bind=engine)
-print("Database initialized successfully!")
+print("Database tables created successfully.")

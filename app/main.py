@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import triggers, events, test_api
 from app.services.scheduler import scheduler
+from app.utils.auth import validate_api_key
 from contextlib import asynccontextmanager
 import logging
 

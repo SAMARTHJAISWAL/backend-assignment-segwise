@@ -1,14 +1,13 @@
-import os
-from fastapi import HTTPException, Security
-from fastapi.security.api_key import APIKeyHeader
-from dotenv import load_dotenv
+import logging
+from fastapi import HTTPException, Header
 
-# Load environment variables
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-api_key_header = APIKeyHeader(name="X-API-KEY")
-SECRET_API_KEY = os.getenv("SECRET_API_KEY")
-
-def validate_api_key(api_key: str = Security(api_key_header)):
-    if api_key != SECRET_API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
+def validate_api_key(x_api_key: str = Header(...)):
+    """
+    Validates the provided API key in the request header.
+    """
+    logger.info(f"Received API Key: {x_api_key}")
+    if x_api_key != "your-secure-secret-key-123456":
+        logger.warning("Invalid API key provided.")
+        raise HTTPException(status_code=401, detail="Not authenticated")
