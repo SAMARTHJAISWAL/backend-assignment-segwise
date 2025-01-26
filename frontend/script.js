@@ -1,12 +1,7 @@
 <<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", () => {
-    const apiBaseURL = "http://127.0.0.1:8000";
+    const apiBaseURL = "https://backend-assignment-segwise.onrender.com/";
     const apiKey = "your-secure-secret-key-123456";
-=======
-const apiBaseURL = "https://backend-assignment-segwise.onrender.com/";
-const apiKey = "your-secure-secret-key-123456";
->>>>>>> 78bd55017856ad4aeed75be3cdd55aeabfd3b5e1
-
     let currentPage = 1;
 
     // Create a new trigger
