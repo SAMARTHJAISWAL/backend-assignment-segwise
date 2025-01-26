@@ -74,6 +74,49 @@ Users can also test the triggers without saving them permanently. The platform p
 }
 ```
 
+## Local Setup
+
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Steps
+1. Clone the repository:  
+   ```bash
+   git clone <repository-link>
+   cd event-trigger-platform
+   ```
+
+2. Build the Docker image:  
+   ```bash
+   docker-compose build
+   ```
+
+3. Run the application:  
+   ```bash
+   docker-compose up
+   ```
+
+4. Access the application:  
+   - **Frontend:** `http://127.0.0.1:5500`  
+   - **Backend:** `http://127.0.0.1:8000`
+
+### Database Setup
+The database schema is initialized automatically. If needed, you can reinitialize it by running:  
+```bash
+python initialize_database.py
+```
+
+---
+
+## Running Tests
+Tests can be run using the following command:  
+```bash
+pytest
+```
+
+---
+
 
 ## Cost Estimation
 **Assumptions:**
@@ -99,6 +142,9 @@ Users can also test the triggers without saving them permanently. The platform p
    - Uvicorn (ASGI Server)
    - Render (Backend Hosting)
    - Vercel (Frontend Hosting)
+   - ChatGPT
+   - ClaudeAI
+   - Postman
 
 ---
 
