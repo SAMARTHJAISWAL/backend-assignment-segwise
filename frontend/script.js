@@ -1,4 +1,4 @@
-const apiBaseURL = "http://127.0.0.1:8000";
+const apiBaseURL = "https://backend-assignment-segwise.onrender.com/";
 const apiKey = "your-secure-secret-key-123456";
 
 let currentPage = 1;
