@@ -13,11 +13,9 @@ def test_trigger(payload: dict, db: Session = Depends(get_db)):
     try:
         logger.info(f"Received payload: {payload}")
         
-        # Log the event
         event = log_event(db, trigger_id=0, details=f"Test trigger executed with payload: {payload}")
         logger.info(f"Event logged successfully: {event}")
-        
-        # Update the cache
+    
         cache_key = "events:archived:False"
         active_events = get_events(db, archived=False, use_cache=False)
         cache_events(cache_key, active_events)
