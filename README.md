@@ -1,46 +1,110 @@
 # Event Trigger Platform
 
 ## Overview
-The Event Trigger Platform is a robust system designed to create, manage, and test triggers and events. Built with FastAPI for APIs, Redis for caching, and SQLite for persistent storage, it prioritizes modularity, scalability, and simplicity.
+The **Event Trigger Platform** is an application where users can manage event triggers that get activated based on certain conditions. It supports two types of triggers:
+
+1. **Scheduled Triggers**:  
+   - Fire at a fixed time or interval.  
+   - Can be one-time or recurring .  
+
+2. **API Triggers**:  
+   - Triggered by sending an API request with predefined schema and values.  
+
+Users can also test the triggers without saving them permanently. The platform provides a comprehensive event log system that archives and deletes event logs after a specific period.
 
 ---
 
 ## Features
-- **Trigger Management:** Create, read, update, and delete triggers.
-- **Event Logging:** Logs all events, including manual and automated triggers.
-- **Caching:** Optimized with Redis for high-performance reads of event logs.
-- **Scheduled Cleanup:** Automatically removes logs older than 48 hours.
-- **Pagination:** Fetch event logs efficiently with pagination support.
-- **Aggregation:** Aggregate logs by `trigger_id` for insights and analytics.
-- **Authentication:** Secured with API key-based authentication.
-- **Dockerized Environment:** Simplified setup and deployment using Docker.
+
+- Create, edit, and delete triggers.
+- View active and archived event logs.
+- Test triggers manually (both API and scheduled).
+- Event logs retention:
+  - Active for 2 hours.
+  - Archived for an additional 46 hours before deletion.
+- UI for trigger management and event logs.
 
 ---
 
-## Requirements
-- Python 3.10+
-- FastAPI
-- Redis
-- Docker
+## Deployment
+
+### Deployed Application
+- **Frontend (Vercel):** [Frontend Link]([<insert-your-vercel-link>](https://backend-assignment-segwise.vercel.app/))  
+- **Backend (Render):** [Backend Link]([<insert-your-render-link>](https://backend-assignment-segwise.onrender.com/))  
+
+---
 
 ## API Endpoints
 
-### Triggers
-- `POST /triggers/` - Create a new trigger.
-- `GET /triggers/` - List all triggers.
-- `PUT /triggers/{id}` - Update an existing trigger.
-- `DELETE /triggers/{id}` - Delete a trigger.
+### 1. Create Trigger
+**Endpoint:** `POST /triggers/`  
+**Payload:**  
+```json
+{
+  "name": "Test Trigger",
+  "type": "scheduled",
+  "payload": "Sample Payload",
+  "schedule_time": "2025-01-26T15:00:00"
+}
+```
 
-### Events
-- `GET /events/` - List event logs with pagination.
-- `GET /events/aggregate` - Aggregate logs by `trigger_id`.
-- `PUT /events/archive/{id}` - Archive an event.
+### 2. View Triggers
+**Endpoint:** `GET /triggers/`  
+**Headers:**  
+```json
+{
+  "X-API-KEY": "your-secure-secret-key-123456"
+}
+```
 
-### Testing
-- `POST /test/` - Manually test a trigger.
+### 3. Test Triggers
+**Endpoint for Scheduled:** `POST /test/scheduled/`  
+**Payload:**  
+```json
+{
+  "schedule_time": "2025-01-26T15:10:00"
+}
+```
 
-## Future Enhancements
-- Develop a web-based UI for managing triggers and events.
-- Add real-time analytics dashboards and advanced reporting.
-- Implement multi-database support (e.g., PostgreSQL, MySQL).
-- Extend cloud compatibility for AWS Lambda or Azure Functions.
+**Endpoint for API:** `POST /test/api/`  
+**Payload:**  
+```json
+{
+  "payload": { "key": "value" }
+}
+```
+
+
+## Cost Estimation
+**Assumptions:**
+- Hosted on Render (backend) and Vercel (frontend).  
+- Queries: 5 queries/day.  
+
+| Component             | Monthly Cost (USD) |
+|-----------------------|--------------------|
+| Render Free Tier      | Free               |
+| Vercel Free Tier      | Free               |
+| SQLite                | Free               |
+| Total                 | 0 USD              |
+
+---
+
+## Notes
+1. **Authentication:** Simple API key-based authentication is implemented. 
+2. **Caching:** Event logs are cached using Redis for performance.
+3. **Tools Used:**
+   - Python (FastAPI)
+   - SQLite (Database)
+   - Redis (Caching)
+   - Uvicorn (ASGI Server)
+   - Render (Backend Hosting)
+   - Vercel (Frontend Hosting)
+
+---
+
+## Assumptions
+1. Triggers can be edited but not paused once active.
+2. Event logs are retained for exactly 48 hours (2 hours active + 46 hours archived).
+3. Deployment uses free-tier resources for cost efficiency.
+
+---
