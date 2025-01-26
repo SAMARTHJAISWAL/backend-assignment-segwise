@@ -6,23 +6,23 @@ body {
     align-items: center;
     height: 100vh;
     margin: 0;
-  }
-  
-  .container {
+}
+
+.container {
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 20px;
     text-align: center;
     width: 50%;
-  }
-  
-  h1 {
+}
+
+h1 {
     font-size: 24px;
     margin-bottom: 20px;
-  }
-  
-  button {
+}
+
+button {
     background-color: #007bff;
     border: none;
     color: white;
@@ -30,26 +30,32 @@ body {
     margin: 5px;
     border-radius: 5px;
     cursor: pointer;
-  }
-  
-  button.active {
+}
+
+button.active {
     background-color: #0056b3;
-  }
-  
-  button:disabled {
+}
+
+button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
-  }
-  
-  #events-list {
+}
+
+#events-list {
     text-align: left;
     margin-top: 20px;
-  }
-  
-  #events-list div {
+}
+
+#events-list div {
     background: #f4f4f4;
     padding: 10px;
     margin: 10px 0;
     border-radius: 5px;
-  }
-  
+}
+
+input#trigger-name {
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
