@@ -25,7 +25,7 @@ app = FastAPI(title="Event Trigger Platform", lifespan=lifespan)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],  # Explicitly allow your frontend origin
+    allow_origins=["*"],  # Explicitly allow your frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
