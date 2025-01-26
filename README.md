@@ -29,8 +29,8 @@ Users can also test the triggers without saving them permanently. The platform p
 ## Deployment
 
 ### Deployed Application
-- **Frontend (Vercel):** [Frontend Link]([https://backend-assignment-segwise.vercel.app/])  
-- **Backend (Render):** [Backend Link]([https://backend-assignment-segwise.onrender.com/])  
+- **Frontend (Vercel):** [https://backend-assignment-segwise.vercel.app/]
+- **Backend (Render):** [https://backend-assignment-segwise.onrender.com/]
 
 ---
 
