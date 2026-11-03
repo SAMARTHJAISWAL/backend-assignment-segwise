@@ -1,8 +1,19 @@
-<<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", () => {
-    const apiBaseURL = "https://backend-assignment-segwise.onrender.com/";
-    const apiKey = "your-secure-secret-key-123456";
+    // Configured in config.js so the backend URL and API key aren't baked into this file.
+    const config = window.APP_CONFIG || {};
+    const apiBaseURL = (config.apiBaseURL || "http://127.0.0.1:8000").replace(/\/+$/, "");
+    const apiKey = config.apiKey || "";
     let currentPage = 1;
+    let showingArchived = false;
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
 
     // Create a new trigger
     async function createTrigger() {
@@ -52,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load events (archived or recent)
     async function loadEvents(archived) {
+        showingArchived = archived;
         const eventsList = document.getElementById("event-logs");
         eventsList.innerHTML = "Loading...";
 
@@ -70,9 +82,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 events.forEach((event) => {
                     const eventRow = document.createElement("tr");
                     eventRow.innerHTML = `
-                        <td>${event.id}</td>
-                        <td>${event.timestamp}</td>
-                        <td>${event.details}</td>
+                        <td>${escapeHtml(event.id)}</td>
+                        <td>${escapeHtml(event.timestamp)}</td>
+                        <td>${escapeHtml(event.details)}</td>
                     `;
                     eventsList.appendChild(eventRow);
                 });
@@ -110,11 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 triggers.forEach((trigger) => {
                     const triggerRow = document.createElement("tr");
                     triggerRow.innerHTML = `
-                        <td>${trigger.id}</td>
-                        <td>${trigger.name}</td>
-                        <td>${trigger.type}</td>
-                        <td>${trigger.schedule_time || "N/A"}</td>
-                        <td>${trigger.payload || "N/A"}</td>
+                        <td>${escapeHtml(trigger.id)}</td>
+                        <td>${escapeHtml(trigger.name)}</td>
+                        <td>${escapeHtml(trigger.type)}</td>
+                        <td>${escapeHtml(trigger.schedule_time || "N/A")}</td>
+                        <td>${escapeHtml(trigger.payload || "N/A")}</td>
                         <td>${trigger.is_active ? "Yes" : "No"}</td>
                     `;
                     triggersList.appendChild(triggerRow);
@@ -141,20 +153,20 @@ document.addEventListener("DOMContentLoaded", () => {
         prevButton.onclick = () => {
             if (currentPage > 1) {
                 currentPage--;
-                loadEvents(false);
+                loadEvents(showingArchived);
             }
         };
 
         nextButton.onclick = () => {
             currentPage++;
-            loadEvents(false);
+            loadEvents(showingArchived);
         };
     }
 
     // Attach event listeners
     document.getElementById("create-trigger-btn").addEventListener("click", createTrigger);
-    document.getElementById("recent-events-btn").addEventListener("click", () => loadEvents(false));
-    document.getElementById("archived-events-btn").addEventListener("click", () => loadEvents(true));
+    document.getElementById("recent-events-btn").addEventListener("click", () => { currentPage = 1; loadEvents(false); });
+    document.getElementById("archived-events-btn").addEventListener("click", () => { currentPage = 1; loadEvents(true); });
 
     // Initial load of triggers and recent events
     fetchTriggers();

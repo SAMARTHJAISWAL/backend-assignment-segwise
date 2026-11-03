@@ -1,87 +1,123 @@
-from datetime import datetime, timedelta
-from app.crud.events import log_event
-from app.utils.db import SessionLocal
-from app.models import EventLog
-from apscheduler.schedulers.background import BackgroundScheduler
 import logging
+from datetime import datetime, timedelta
 
-logging.basicConfig(level=logging.INFO)
+from apscheduler.jobstores.base import JobLookupError
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from app.config import settings
+from app.crud.events import log_event
+from app.models import EventLog, Trigger
+from app.utils.cache import invalidate_events_cache
+from app.utils.db import SessionLocal
+from app.utils.time import utcnow
+
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler()
 
-def execute_trigger(trigger_id):
+
+def _job_id(trigger_id: int) -> str:
+    return f"trigger-{trigger_id}"
+
+
+def execute_trigger(trigger_id: int):
+    """Fire a scheduled trigger: log an event and mark the (one-time) trigger inactive."""
     try:
         with SessionLocal() as db:
-            log_event(db, trigger_id=trigger_id, details="Scheduled trigger executed.")
-        logger.info(f"Trigger {trigger_id} executed successfully at {datetime.now()}")
+            trigger = db.get(Trigger, trigger_id)
+            if trigger is None:
+                logger.warning(f"Trigger {trigger_id} no longer exists; skipping.")
+                return
+            details = "Scheduled trigger executed."
+            if trigger.payload:
+                details += f" Payload: {trigger.payload}"
+            log_event(db, trigger_id=trigger_id, details=details)
+            trigger.is_active = False
+            db.commit()
+        logger.info(f"Trigger {trigger_id} executed at {datetime.now()}")
     except Exception as e:
         logger.error(f"Error executing trigger {trigger_id}: {e}")
 
-def schedule_trigger(trigger_id, schedule_time):
-    try:
-        scheduler.add_job(
-            func=execute_trigger,
-            trigger="date",
-            run_date=schedule_time,
-            args=[trigger_id],
-            id=str(trigger_id), 
-            replace_existing=True  
-        )
-        logger.info(f"Trigger {trigger_id} scheduled for {schedule_time}")
-    except Exception as e:
-        logger.error(f"Error scheduling trigger {trigger_id}: {e}")
 
-def cleanup_archived_events():
+def schedule_trigger(trigger_id: int, schedule_time: datetime):
+    """Schedule a one-time job. Past times run immediately (APScheduler misfire grace)."""
+    scheduler.add_job(
+        func=execute_trigger,
+        trigger="date",
+        run_date=schedule_time,
+        args=[trigger_id],
+        id=_job_id(trigger_id),
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+    logger.info(f"Trigger {trigger_id} scheduled for {schedule_time}")
+
+
+def unschedule_trigger(trigger_id: int):
     try:
-        with SessionLocal() as db:
-            cutoff_time = datetime.now() - timedelta(hours=48)
-            deleted = db.query(EventLog).filter(
-                EventLog.archived == True, EventLog.timestamp < cutoff_time
-            ).delete()
-            db.commit()
-            logger.info(f"Deleted {deleted} archived events older than 48 hours.")
-    except Exception as e:
-        logger.error(f"Error during cleanup of archived events: {e}")
+        scheduler.remove_job(_job_id(trigger_id))
+    except JobLookupError:
+        pass
+
+
+def reschedule_pending_triggers():
+    """Jobs live in memory, so re-register active scheduled triggers after a restart."""
+    with SessionLocal() as db:
+        pending = (
+            db.query(Trigger)
+            .filter(Trigger.type == "scheduled", Trigger.is_active.is_(True))
+            .filter(Trigger.schedule_time.isnot(None))
+            .all()
+        )
+        for trigger in pending:
+            schedule_trigger(trigger.id, trigger.schedule_time)
+    return len(pending)
+
+
+def archive_old_events():
+    """Move events older than ACTIVE_RETENTION_HOURS from active to archived."""
+    cutoff = utcnow() - timedelta(hours=settings.ACTIVE_RETENTION_HOURS)
+    with SessionLocal() as db:
+        archived = (
+            db.query(EventLog)
+            .filter(EventLog.archived.is_(False), EventLog.timestamp < cutoff)
+            .update({EventLog.archived: True}, synchronize_session=False)
+        )
+        db.commit()
+    if archived:
+        invalidate_events_cache()
+    logger.info(f"Archived {archived} events older than {settings.ACTIVE_RETENTION_HOURS} hours.")
+    return archived
+
 
 def cleanup_old_logs():
-    try:
-        with SessionLocal() as db:
-            cutoff_time = datetime.now() - timedelta(hours=48)
-            deleted_rows = (
-                db.query(EventLog).filter(EventLog.timestamp < cutoff_time).delete()
-            )
-            db.commit()
-            logger.info(f"Deleted {deleted_rows} logs older than 48 hours.")
-    except Exception as e:
-        logger.error(f"Error during cleanup of old logs: {e}")
+    """Delete events older than TOTAL_RETENTION_HOURS (active or archived)."""
+    cutoff = utcnow() - timedelta(hours=settings.TOTAL_RETENTION_HOURS)
+    with SessionLocal() as db:
+        deleted = (
+            db.query(EventLog)
+            .filter(EventLog.timestamp < cutoff)
+            .delete(synchronize_session=False)
+        )
+        db.commit()
+    if deleted:
+        invalidate_events_cache()
+    logger.info(f"Deleted {deleted} logs older than {settings.TOTAL_RETENTION_HOURS} hours.")
+    return deleted
 
-def start_scheduler():
-    try:
-        scheduler.start()
-        logger.info("Scheduler started successfully.")
-    except Exception as e:
-        logger.error(f"Error starting the scheduler: {e}")
 
-def shutdown_scheduler():
+def run_retention_jobs():
     try:
-        scheduler.shutdown()
-        logger.info("Scheduler shut down successfully.")
+        archive_old_events()
+        cleanup_old_logs()
     except Exception as e:
-        logger.error(f"Error shutting down the scheduler: {e}")
+        logger.error(f"Error running retention jobs: {e}")
+
 
 scheduler.add_job(
-    func=cleanup_archived_events,
+    func=run_retention_jobs,
     trigger="interval",
-    hours=1,
-    id="cleanup_archived_events",
-    replace_existing=True,
-)
-
-scheduler.add_job(
-    func=cleanup_old_logs,
-    trigger="interval",
-    hours=1,
-    id="cleanup_old_logs",
+    minutes=10,
+    id="retention",
     replace_existing=True,
 )
