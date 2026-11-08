@@ -1,41 +1,43 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import triggers, events, test_api
-from app.services.scheduler import scheduler
-from app.utils.auth import validate_api_key
-from contextlib import asynccontextmanager
-import logging
 
-# Configure logging
+from app.routes import events, test_api, triggers
+from app.services.scheduler import reschedule_pending_triggers, scheduler
+from app.utils.db import init_db
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_db()
+    scheduler.start()
+    count = reschedule_pending_triggers()
+    logger.info(f"Scheduler started ({count} pending scheduled triggers restored)")
     try:
-        scheduler.start()
-        logger.info("Scheduler started")
         yield
     finally:
-        scheduler.shutdown()
+        scheduler.shutdown(wait=False)
         logger.info("Scheduler shut down")
 
-# Create the FastAPI app with lifespan
+
 app = FastAPI(title="Event Trigger Platform", lifespan=lifespan)
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Explicitly allow your frontend origin
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(triggers.router, prefix="/triggers", tags=["Triggers"])
 app.include_router(events.router, prefix="/events", tags=["Events"])
 app.include_router(test_api.router, prefix="/test", tags=["Test API"])
+
 
 @app.get("/")
 def read_root():

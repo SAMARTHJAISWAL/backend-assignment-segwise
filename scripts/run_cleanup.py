@@ -1,10 +1,9 @@
-from app.services.scheduler import cleanup_archived_events, cleanup_old_logs
+"""Run the event-retention jobs once (archive after 2h, delete after 48h).
+
+Run from the repo root:  python -m scripts.run_cleanup
+"""
+from app.services.scheduler import archive_old_events, cleanup_old_logs
 
 if __name__ == "__main__":
-    print("Running cleanup_archived_events...")
-    cleanup_archived_events()
-    print("Archived events cleanup completed.")
-
-    print("Running cleanup_old_logs...")
-    cleanup_old_logs()
-    print("Old logs cleanup completed.")
+    print(f"Archived {archive_old_events()} events.")
+    print(f"Deleted {cleanup_old_logs()} events.")
